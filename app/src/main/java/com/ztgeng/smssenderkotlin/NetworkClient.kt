@@ -32,12 +32,18 @@ class NetworkClient(context: Context){
         Volley.newRequestQueue(context.applicationContext)
     }
 
-    fun sendToken(url: String?, token: String) {
-        sendString(url ?: return, token)
+    /**
+     * 如能够从SharedPreferences获取服务器地址，则向服务端更新本机FCM Token。
+     */
+    fun sendToken(context: Context, token: String) {
+        sendString(getServerName(context) ?: return, token)
     }
 
-    fun sendSms(url: String?, data: JSONArray) {
-        sendJsonArray(url ?: return, data)
+    /**
+     * 如能够从SharedPreferences获取服务器地址，则向服务端发送数据。
+     */
+    fun sendSms(context: Context, data: JSONArray) {
+        sendJsonArray(getServerName(context) ?: return, data)
     }
 
     private fun sendJsonArray(url: String, jsonArray: JSONArray) {

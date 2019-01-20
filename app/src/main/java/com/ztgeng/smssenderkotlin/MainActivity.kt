@@ -2,6 +2,7 @@ package com.ztgeng.smssenderkotlin
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
@@ -30,6 +31,7 @@ class MainActivity : AppCompatActivity() {
             if (!url.isNullOrBlank()) {
                 saveServerName(this, url)
                 updateFCMToken()
+
             } else {
                 Toast.makeText(this, "Invalid url", Toast.LENGTH_SHORT).show()
             }
@@ -38,6 +40,10 @@ class MainActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_SMS), permissionRequestCode)
         }
+
+        // Android 4.4 需要这么做一下来触发授权申请
+        val cursor = contentResolver.query(Uri.parse("content://sms/inbox"), null, null, null, null)
+        cursor?.close()
     }
 
     override fun onResume() {
@@ -57,6 +63,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * 主动获取本机FCM Token并向服务端更新。
+     */
     private fun updateFCMToken() {
         FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener { task ->
             run {
@@ -66,7 +75,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 val token = task.result?.token
                 Log.d("gengz", "Get FCM token: $token")
-                NetworkClient.getInstance(this.applicationContext).sendToken(getServerName(this), token ?: return@run)
+                NetworkClient.getInstance(this.applicationContext).sendToken(this, token ?: return@run)
             }
         }
     }
