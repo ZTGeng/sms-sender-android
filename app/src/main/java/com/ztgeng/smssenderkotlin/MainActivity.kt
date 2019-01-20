@@ -31,7 +31,6 @@ class MainActivity : AppCompatActivity() {
             if (!url.isNullOrBlank()) {
                 saveServerName(this, url)
                 updateFCMToken()
-
             } else {
                 Toast.makeText(this, "Invalid url", Toast.LENGTH_SHORT).show()
             }
