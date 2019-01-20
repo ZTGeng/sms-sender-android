@@ -1,7 +1,6 @@
 package com.ztgeng.smssenderkotlin
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -13,26 +12,24 @@ import android.util.Log
 import android.widget.Toast
 import com.google.firebase.iid.FirebaseInstanceId
 
-const val PREFS_NAME = "SmsSender"
-const val SERVER_NAME = "server"
-
 class MainActivity : AppCompatActivity() {
 
     private val permissionRequestCode = 1234
+    private lateinit var editText: AppCompatEditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val editText: AppCompatEditText = findViewById(R.id.server_input)
-        editText.setText(getSharedPreferences(PREFS_NAME, MODE_PRIVATE).getString(SERVER_NAME, ""))
+        editText = findViewById(R.id.server_input)
+        editText.setText(getServerName(this))
 
         val button: AppCompatButton = findViewById(R.id.button)
         button.setOnClickListener {
             val url = editText.text?.toString()
             if (!url.isNullOrBlank()) {
-                getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().putString(SERVER_NAME, url).apply()
-                getFCMToken()
+                saveServerName(this, url)
+                updateFCMToken()
             } else {
                 Toast.makeText(this, "Invalid url", Toast.LENGTH_SHORT).show()
             }
@@ -41,6 +38,11 @@ class MainActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_SMS) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_SMS), permissionRequestCode)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        editText.setText(getServerName(this))
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
@@ -55,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getFCMToken() {
+    private fun updateFCMToken() {
         FirebaseInstanceId.getInstance().instanceId.addOnCompleteListener { task ->
             run {
                 if (!task.isSuccessful) {
@@ -64,7 +66,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 val token = task.result?.token
                 Log.d("gengz", "Get FCM token: $token")
-                NetworkClient.getInstance(this.applicationContext).sendToken(this, token ?: return@run)
+                NetworkClient.getInstance(this.applicationContext).sendToken(getServerName(this), token ?: return@run)
             }
         }
     }

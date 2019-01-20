@@ -32,14 +32,12 @@ class NetworkClient(context: Context){
         Volley.newRequestQueue(context.applicationContext)
     }
 
-    private fun getUrl(context: Context) = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).getString(SERVER_NAME, null)
-
-    fun sendToken(context: Context, token: String) {
-        sendString(getUrl(context) ?: return, token)
+    fun sendToken(url: String?, token: String) {
+        sendString(url ?: return, token)
     }
 
-    fun sendSms(context: Context, data: JSONArray) {
-        sendJsonArray(getUrl(context) ?: return, data)
+    fun sendSms(url: String?, data: JSONArray) {
+        sendJsonArray(url ?: return, data)
     }
 
     private fun sendJsonArray(url: String, jsonArray: JSONArray) {

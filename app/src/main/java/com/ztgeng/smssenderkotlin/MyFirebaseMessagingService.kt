@@ -1,5 +1,6 @@
 package com.ztgeng.smssenderkotlin
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -10,12 +11,15 @@ import java.util.*
 
 private const val FETCH_SMS_KEY = "fetch_sms"
 private const val SMS_NUMBER_KEY = "number"
+private const val SERVER_IP_KEY = "server"
 private const val DEFAULT_SMS_NUMBER = 5
 
 class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String?) {
         Log.d("gengz", "On new token: $token")
-        NetworkClient.getInstance(this.applicationContext).sendToken(this, token ?: return)
+        if (!token.isNullOrBlank()) {
+            NetworkClient.getInstance(this.applicationContext).sendToken(getServerName(this), token)
+        }
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage?) {
@@ -24,8 +28,13 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         remoteMessage?.notification?.let { Log.d("gengz", "Message: ${it.title} - ${it.body}") }
 
         when (remoteMessage?.collapseKey) {
-            FETCH_SMS_KEY -> NetworkClient.getInstance(this.applicationContext).sendSms(
-                    this, readSms(remoteMessage.data?.get(SMS_NUMBER_KEY)?.toInt() ?: DEFAULT_SMS_NUMBER))
+            FETCH_SMS_KEY -> {
+                val url = remoteMessage.data?.get(SERVER_IP_KEY)
+                NetworkClient.getInstance(this.applicationContext).sendSms(
+                        url ?: getServerName(this),
+                        readSms(remoteMessage.data?.get(SMS_NUMBER_KEY)?.toInt() ?: DEFAULT_SMS_NUMBER))
+                url?.let { saveServerName(this, it) }
+            }
         }
     }
 
